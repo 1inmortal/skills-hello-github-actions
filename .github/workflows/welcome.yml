@@ -1,6 +1,92 @@
-name: Post welcome comment
+name: CI/CD Workflow
+
 on:
+  push:
+    branches:
+      - main  # Ejecutar cuando haya un push en la rama main
   pull_request:
-    types: [opened]
-permissions:
-  pull-requests: write
+    branches:
+      - main  # Ejecutar para pull requests hacia la rama main
+
+jobs:
+  # Job para Node.js (puedes cambiar a otro entorno si lo prefieres)
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout del código
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # 2. Configurar Node.js (cambia la versión según la que uses)
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'  # Usa la versión de Node.js que necesites
+
+    # 3. Instalar dependencias
+    - name: Install dependencies
+      run: npm install  # Si usas npm, si usas yarn o pip, cambia el comando
+
+    # 4. Ejecutar pruebas (usando Jest en este ejemplo)
+    - name: Run tests
+      run: npm test  # Si usas un framework diferente, cambia el comando
+
+    # 5. Verificación de estilo de código (usando ESLint)
+    - name: Lint code
+      run: npm run lint  # Si usas ESLint o Prettier, ejecuta el comando correspondiente
+
+    # 6. Generar artefactos (si tu proyecto genera archivos estáticos)
+    - name: Build the project
+      run: npm run build  # Ejecuta el build de tu proyecto (puedes cambiar este comando)
+
+  # Job para desplegar a GitHub Pages (si es un sitio web)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  # Este job depende de que el job de build haya sido exitoso
+
+    steps:
+    # 1. Checkout del código
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # 2. Configurar Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    # 3. Instalar dependencias
+    - name: Install dependencies
+      run: npm install
+
+    # 4. Generar los archivos de producción (sitio web estático, etc.)
+    - name: Build the project
+      run: npm run build  # Este comando depende de tu proyecto
+
+    # 5. Desplegar a GitHub Pages (usa la acción de JamesIves)
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages  # La rama de destino para GitHub Pages
+        folder: dist  # El directorio donde están los archivos generados (ajusta esto si es diferente)
+
+  # Job para ejecutar pruebas de integración (si es necesario)
+  integration_tests:
+    runs-on: ubuntu-latest
+    needs: build  # Este job depende de que el job de build haya sido exitoso
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run integration tests
+      run: npm run integration-tests  # Cambia este comando según tus necesidades
